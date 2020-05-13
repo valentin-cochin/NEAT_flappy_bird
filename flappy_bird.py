@@ -15,6 +15,12 @@ import neat
 # Global variables
 WIN_WIDTH = 600
 WIN_HEIGHT = 800
+FLOOR = 730
+
+pygame.font.init()  # init font
+STAT_FONT = pygame.font.SysFont("comicsans", 50)
+END_FONT = pygame.font.SysFont("comicsans", 70)
+DRAW_LINES = False
 
 # Images used in the game
 # Todo add .convert_alpha()
@@ -103,12 +109,12 @@ class Bird():
         # tilt the bird
         blit_rotate_center(win, self.img, (self.x, self.y), self.tilt)
 
-        def get_mask(self):
-            """
-            gets the mask for the current image of the bird
-            :return: None
-            """
-            return pygame.mask.from_surface(self.img)
+    def get_mask(self):
+        """
+        gets the mask for the current image of the bird
+        :return: None
+        """
+        return pygame.mask.from_surface(self.img)
 
 
 class Pipe():
@@ -155,13 +161,59 @@ class Pipe():
         top_offset = (self.x - bird.x, self.top - round(bird.y))
         bottom_offset = (self.x - bird.x, self.bottom - round(bird.y))
 
-        t_point = bird_mask.overlap(top_mask,top_offset)
+        t_point = bird_mask.overlap(top_mask, top_offset)
         b_point = bird_mask.overlap(bottom_mask, bottom_offset)
 
-        if b_point or t_point: # if they're not none
+        if b_point or t_point:  # if they're not none
             return True
         else:
             return False
+
+
+class Base():
+    """
+    Represnts the moving floor of the game
+    """
+    VEL = 5
+    WIDTH = base_img.get_width()
+    IMG = base_img
+
+    def __init__(self, y):
+        """
+        Initialize the object
+        :param y: int
+        :return: None
+        """
+        self.y = y
+        self.x1 = 0
+        self.x2 = self.WIDTH
+
+    def move(self):
+        """
+        Move floor so it looks like its scrolling
+        :return: None
+        """
+        # We use two images to fake movement
+        self.x1 -= self.VEL
+        self.x2 -= self.VEL
+
+        # If the first image is off-screen,
+        # we put it behind the second one
+        if self.x1 + self.WIDTH < 0:
+            self.x1 = self.x2 + self.WIDTH
+
+        if self.x2 + self.WIDTH < 0:
+            self.x2 = self.x1 + self.WIDTH
+
+    def draw(self, win):
+        """
+        Draw the floor. This is two images that move together.
+        :param win: the pygame surface/window
+        :return: None
+        """
+        win.blit(self.IMG, (self.x1, self.y))
+        win.blit(self.IMG, (self.x2, self.y))
+
 
 def blit_rotate_center(surf, image, topleft, angle):
     """
@@ -178,16 +230,30 @@ def blit_rotate_center(surf, image, topleft, angle):
     surf.blit(rotated_image, new_rect.topleft)
 
 
-def draw_window(win, bird):
+def draw_window(win, bird, pipes, base, score):
     win.blit(bg_img, (0, 0))
+
+    for pipe in pipes:
+        pipe.draw(win)
+
+    # score
+    score_color = (255, 255, 255)
+    score_label = STAT_FONT.render("Score: " + str(score), 1, score_color)
+    win.blit(score_label, (WIN_WIDTH - score_label.get_width() - 15, 10))
+
+    base.draw(win)
     bird.draw(win)
     pygame.display.update()
 
 
 def main():
-    bird = Bird(200, 200)
+    base = Base(730)
+    pipes = [Pipe(700)]
+    bird = Bird(230, 350)
     win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
     clock = pygame.time.Clock()
+
+    score = 0
 
     run = True
     while run:
@@ -196,8 +262,35 @@ def main():
             if event.type == pygame.QUIT:
                 run = False
 
-        bird.move()
-        draw_window(win, bird)
+        # bird.move()
+        add_pipe = False
+        rem = []
+        for pipe in pipes:
+            if pipe.collide(bird, win):
+                pass
+
+            if pipe.x + pipe.PIPE_TOP.get_width() < 0:
+                rem.append(pipe)
+
+            if not pipe.passed and pipe.x < bird.x:
+                pipe.passed = True
+                add_pipe = True
+
+            pipe.move()
+
+        if add_pipe:
+            score += 1
+            pipes.append(Pipe(WIN_WIDTH))
+
+        for r in rem:
+            pipes.remove(r)
+
+        # if we hit the ground
+        if bird.y + bird.img.get_height() >= FLOOR:
+            pass
+
+        base.move()
+        draw_window(win, bird, pipes, base, score)
     pygame.quit()
     quit()
 

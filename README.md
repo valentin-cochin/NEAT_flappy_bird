@@ -13,7 +13,7 @@ You need to install the following packages with pip:
 
 Simply run flappy_bird.py
 
-## How the
+## How the Neat Algorithm works (in construction)
 Input layer:
 Bird y
 Distance from top pipe
@@ -27,14 +27,12 @@ population : The bigger, the msot variation you will have
 Fitness function : how far the bird went. We keep birds with the max fitness
 Mex generations : when we cut the progam
 
-# The way I understand Neat algorithm
 
 NEAT favored basic neural networks
 
 We repeat the process till we are happy about the performances of the bird.
 
 ## Resources I recommend on the subject
-
 
 * [Original Neat Paper](http://nn.cs.utexas.edu/downloads/papers/stanley.cec02.pdf)
 * [NEAT package Documentation](https://neat-python.readthedocs.io/en/latest/)
